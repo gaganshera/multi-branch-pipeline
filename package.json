@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
-    "test": "./node_modules/nyc/bin/nyc.js --reporter=html --reporter=lcov --reporter=text-lcov --reporter=text mocha  ./tests/* --exit"
+    "test": "nyc.js --reporter=html --reporter=lcov --reporter=text-lcov --reporter=text mocha  ./tests/* --exit"
   },
   "dependencies": {
     "cookie-parser": "~1.4.4",
@@ -16,6 +16,7 @@
   },
   "devDependencies": {
     "mocha": "~8.0.1",
+    "nyc": "^15.1.0",
     "supertest": "~4.0.2"
   }
 }
