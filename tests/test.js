@@ -1,7 +1,5 @@
-var request = require(`supertest`);
-const express = require('express');
-var app = require('../app');
-// var app = express();
+let request = require(`supertest`);
+let app = require('../app');
 describe(`GET /`, function () {
     it(`respond with hello world`, function(done) {
         request(app).get(`/users`).expect(`respond with a resource`, done);
