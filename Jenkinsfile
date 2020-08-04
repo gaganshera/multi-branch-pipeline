@@ -1,9 +1,11 @@
 pipeline {
   agent any
   
+  environment {
+    scannerHome = tool 'sonar_scanner';
+  }
   tools {
-        nodejs "node"
-        sonarScanner "sonar_scanner";
+    nodejs "node"
   }
   options {
     timestamps()
@@ -30,8 +32,10 @@ pipeline {
       }
     }
     stage('SonarQube analysis') {
-      withSonarQubeEnv('SonarQube') {
-        sh "${sonarScanner}/bin/sonar-scanner"
+      steps {
+        withSonarQubeEnv('SonarQube') {
+          sh "${scannerHome}/bin/sonar-scanner"
+        }
       }
     }
   }
