@@ -3,6 +3,7 @@ pipeline {
   
   tools {
         nodejs "node"
+        sonarScanner "sonar_scanner";
   }
   options {
     timestamps()
@@ -26,6 +27,11 @@ pipeline {
     stage('Tests') {
       steps {
         sh 'npm test'
+      }
+    }
+    stage('SonarQube analysis') {
+      withSonarQubeEnv('SonarQube') {
+        sh "${sonarScanner}/bin/sonar-scanner"
       }
     }
   }
