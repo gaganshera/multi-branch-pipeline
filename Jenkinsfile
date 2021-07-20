@@ -5,8 +5,8 @@ pipeline {
     scannerHome = tool 'sonar_scanner';
   }
   tools {
-    nodejs "node"
-  //  dockerTool 'docker'
+    nodejs "nodejs"
+    dockerTool 'docker'
   }
   options {
     timestamps()
@@ -14,12 +14,14 @@ pipeline {
     timeout(time: 1, unit: 'HOURS')
 
     buildDiscarder(logRotator(daysToKeepStr: '10', numToKeepStr: '20'))
+
+    parallelsAlwaysFailFast()
   }
 
   stages {
     stage('Checkout') {
       steps {
-        checkout scm
+        git 'https://github.com/gaganshera/node-app.git'
       }
     }
     stage('Build') {
@@ -47,7 +49,7 @@ pipeline {
     stage('Docker push to Dockerhub') {
       steps {
         script {
-          docker.withRegistry('', '7808e1b4-b2b9-47d2-81fb-a92f4296837f') {
+          withDockerRegistry(credentialsId: 'dockerhub', toolName: 'docker') {
             sh 'docker push gaganshera/node-app:${BUILD_NUMBER}'
           }
         }
@@ -64,10 +66,19 @@ pipeline {
         }
       }
     }
-    stage('Docker start container') {
-      steps {
-        sh 'docker run -d --name node-app -p 4002:3010 gaganshera/node-app:${BUILD_NUMBER}'
-      }
+    stage('Deployments') {
+        parallel {
+            stage('Docker start container') {
+              steps {
+                sh 'docker run -d --name node-app -p 4002:3010 gaganshera/node-app:${BUILD_NUMBER}'
+              }
+            }
+            stage('Kubernetes Deployment') {
+              steps {
+                sh 'kubectl apply -f k8s/deployment.yaml'
+              }
+            }
+        }
     }
   }
 }
