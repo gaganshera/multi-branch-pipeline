@@ -1,5 +1,5 @@
 let request = require(`supertest`);
-let app = require('../app');
+// let app = require('../app');
 describe.skip(`GET /`, function () {
   it(`respond with hello world`, function (done) {
     request(app).get(`/users`).expect(`respond with a resource`, done);
