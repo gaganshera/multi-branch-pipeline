@@ -39,6 +39,12 @@ pipeline {
         withSonarQubeEnv('SonarQube') {
           sh "${scannerHome}/bin/sonar-scanner"
         }
+        sleep 10
+        timeout(time: 30, unit: 'SECONDS') {
+            // Parameter indicates whether to set pipeline to UNSTABLE if Quality Gate fails
+            // true = set pipeline to UNSTABLE, false = don't
+            waitForQualityGate abortPipeline: true
+        }
       }
     }
     stage('Docker build') {
