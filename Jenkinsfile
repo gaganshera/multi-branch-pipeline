@@ -4,6 +4,8 @@ pipeline {
   environment {
     scannerHome = tool 'SonarQubeScanner';
     dockerPort="${env.BRANCH_NAME == "develop" ? 7300 : 7200}"
+    dockerRegistryUsername="gaganshera"
+    username="gaganjotsingh02"
   }
   tools {
     nodejs "nodejs"
@@ -45,7 +47,7 @@ pipeline {
     }
     stage('Docker Image') {
       steps {
-        sh "docker build -t gaganshera/i-gaganjotsingh02-${env.BRANCH_NAME}:${BUILD_NUMBER} --no-cache ."
+        sh "docker build -t ${dockerRegistryUsername}/i-${username}-${env.BRANCH_NAME}:${BUILD_NUMBER} --no-cache ."
       }
     }
     stage('Containers') {
@@ -63,11 +65,11 @@ pipeline {
         }
         stage('PushtoDockerHub') {
           steps {
-            sh "docker tag gaganshera/i-gaganjotsingh02-${env.BRANCH_NAME}:${BUILD_NUMBER} gaganshera/i-gaganjotsingh02-${env.BRANCH_NAME}:latest"
+            sh "docker tag ${dockerRegistryUsername}/i-${username}-${env.BRANCH_NAME}:${BUILD_NUMBER} ${dockerRegistryUsername}/i-${username}-${env.BRANCH_NAME}:latest"
             script {
               withDockerRegistry(credentialsId: 'DockerHub', toolName: 'Test_Docker') {
-                sh "docker push gaganshera/i-gaganjotsingh02-${env.BRANCH_NAME}:${BUILD_NUMBER}"
-                sh "docker push gaganshera/i-gaganjotsingh02-${env.BRANCH_NAME}:latest"
+                sh "docker push ${dockerRegistryUsername}/i-${username}-${env.BRANCH_NAME}:${BUILD_NUMBER}"
+                sh "docker push ${dockerRegistryUsername}/i-${username}-${env.BRANCH_NAME}:latest"
               }
             }
           }
@@ -76,7 +78,7 @@ pipeline {
     }
     stage('Docker deployment') {
       steps {
-        sh "docker run -d --name c-gaganshera-${env.BRANCH_NAME} -p ${dockerPort}:3010 gaganshera/i-gaganjotsingh02-${env.BRANCH_NAME}:latest"
+        sh "docker run -d --name c-${username}-${env.BRANCH_NAME} -p ${dockerPort}:3010 ${dockerRegistryUsername}/i-${username}-${env.BRANCH_NAME}:latest"
       }
     }
     stage('Kubernetes Deployment') {
