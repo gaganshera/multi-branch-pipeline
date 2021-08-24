@@ -1,12 +1,12 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: node-app-deployment
-  namespace: gagan-k8s
+  name: node-app-develop-deployment
+  namespace: kubernetes-cluster-gaganjotsingh02
   labels:
     app: node-app
 spec:
-  replicas: 3
+  replicas: 4
   selector:
     matchLabels:
       app: node-app
@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: node-app
-          image: gaganshera/nagp-2021-node-devops-app
+          image: gaganshera/i-gaganjotsingh02-develop:latest
           ports:
             - name: http
               containerPort: 3010
@@ -35,33 +35,17 @@ spec:
               memory: "500Mi"
               cpu: "500m"
 ---
-apiVersion: "v1"
-kind: "Service"
+apiVersion: v1
+kind: Service
 metadata:
-  name: "node-app-lb"
-  namespace: "gagan-k8s"
-  labels:
-    app: "node-app-lb"
+  name: node-app-develop
+  namespace: kubernetes-cluster-gaganjotsingh02
 spec:
-  ports:
-  - protocol: "TCP"
-    port: 80
-    targetPort: 3010
+  type: NodePort
   selector:
-    app: "node-app"
-  type: "LoadBalancer"
-  #http
----
-# apiVersion: autoscaling/v1
-# kind: HorizontalPodAutoscaler
-# metadata:
-#   namespace: gagan-k8s
-#   name: node-app-deployment-autoscale
-# spec:
-#   scaleTargetRef:
-#     apiVersion: apps/v1
-#     kind: Deployment
-#     name: node-app-deployment
-#   minReplicas: 1
-#   maxReplicas: 4
-#   targetCPUUtilizationPercentage: 10
+    app: node-app
+  ports:
+    - protocol: TCP
+      nodePort: 30157
+      port: 3010
+      targetPort: 3010

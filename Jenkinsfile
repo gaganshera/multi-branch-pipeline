@@ -2,11 +2,12 @@ pipeline {
   agent any
   
   environment {
-    scannerHome = tool 'sonar_scanner';
+    scannerHome = tool 'SonarQubeScanner';
+    dockerPort="${env.BRANCH_NAME == "develop" ? 7300 : 7200}"
   }
   tools {
     nodejs "nodejs"
-    dockerTool 'docker'
+    dockerTool 'Test_Docker'
   }
   options {
     timestamps()
@@ -19,72 +20,73 @@ pipeline {
   }
 
   stages {
-    stage('Checkout') {
-      steps {
-        git 'https://github.com/gaganshera/node-app.git'
-      }
-    }
     stage('Build') {
       steps {
         sh 'npm i'
       }
     }
-    stage('Tests') {
+    stage('Unit Testing') {
+      when {
+        branch 'master'
+      }
       steps {
         sh 'npm test'
       }
     }
-    stage('SonarQube analysis') {
+    stage('SonarQube Analysis') {
+      when {
+        branch 'develop'
+      }
       steps {
-        withSonarQubeEnv('SonarQube') {
+        withSonarQubeEnv('Test_Sonar') {
           sh "${scannerHome}/bin/sonar-scanner"
         }
         sleep 10
         timeout(time: 30, unit: 'SECONDS') {
-            // Parameter indicates whether to set pipeline to UNSTABLE if Quality Gate fails
-            // true = set pipeline to UNSTABLE, false = don't
             waitForQualityGate abortPipeline: true
         }
       }
     }
-    stage('Docker build') {
+    stage('Docker Image') {
       steps {
-        sh 'docker build -t gaganshera/node-app:${BUILD_NUMBER} --no-cache .'
+        sh "docker build -t gaganshera/i-gaganjotsingh02-${env.BRANCH_NAME}:${BUILD_NUMBER} --no-cache ."
       }
     }
-    stage('Docker push to Dockerhub') {
-      steps {
-        script {
-          withDockerRegistry(credentialsId: 'dockerhub', toolName: 'docker') {
-            sh 'docker push gaganshera/node-app:${BUILD_NUMBER}'
+    stage('Containers') {
+      parallel {
+        stage('PrecontainerCheck') {
+          steps {
+            sh '''
+              CONTAINER_ID=$(docker ps -a | grep "${dockerPort}" | cut -d " " -f 1)
+              if [ $CONTAINER_ID ]
+              then
+                  docker rm -f $CONTAINER_ID
+              fi
+            '''
+          }
+        }
+        stage('PushtoDockerHub') {
+          steps {
+            sh "docker tag gaganshera/i-gaganjotsingh02-${env.BRANCH_NAME}:${BUILD_NUMBER} gaganshera/i-gaganjotsingh02-${env.BRANCH_NAME}:latest"
+            script {
+              withDockerRegistry(credentialsId: 'DockerHub', toolName: 'Test_Docker') {
+                sh 'docker push gaganshera/i-gaganjotsingh02-${env.BRANCH_NAME}:${BUILD_NUMBER}'
+                sh 'docker push gaganshera/i-gaganjotsingh02-${env.BRANCH_NAME}:latest'
+              }
+            }
           }
         }
       }
     }
-    stage('Remove previous container') {
+    stage('Docker deployment') {
       steps {
-        script {
-          try {
-            sh 'docker rm -f $(docker ps --filter "name=node-app" -aq)'
-          } catch(err) {
-            echo err.getMessage()
-          }
-        }
+        sh "docker run -d --name c-gaganshera-${env.BRANCH_NAME} -p ${dockerPort}:3010 gaganshera/i-gaganjotsingh02-${env.BRANCH_NAME}:latest"
       }
     }
-    stage('Deployments') {
-        parallel {
-            stage('Docker start container') {
-              steps {
-                sh 'docker run -d --name node-app -p 4002:3010 gaganshera/node-app:${BUILD_NUMBER}'
-              }
-            }
-            stage('Kubernetes Deployment') {
-              steps {
-                sh 'kubectl apply -f k8s/deployment.yaml'
-              }
-            }
-        }
+    stage('Kubernetes Deployment') {
+      steps {
+        sh 'kubectl apply -f k8s/deployment.yaml'
+      }
     }
   }
 }
