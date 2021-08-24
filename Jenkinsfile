@@ -70,8 +70,8 @@ pipeline {
             sh "docker tag gaganshera/i-gaganjotsingh02-${env.BRANCH_NAME}:${BUILD_NUMBER} gaganshera/i-gaganjotsingh02-${env.BRANCH_NAME}:latest"
             script {
               withDockerRegistry(credentialsId: 'DockerHub', toolName: 'Test_Docker') {
-                sh 'docker push gaganshera/i-gaganjotsingh02-${env.BRANCH_NAME}:${BUILD_NUMBER}'
-                sh 'docker push gaganshera/i-gaganjotsingh02-${env.BRANCH_NAME}:latest'
+                sh "docker push gaganshera/i-gaganjotsingh02-${env.BRANCH_NAME}:${BUILD_NUMBER}"
+                sh "docker push gaganshera/i-gaganjotsingh02-${env.BRANCH_NAME}:latest"
               }
             }
           }
