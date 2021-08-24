@@ -41,10 +41,6 @@ pipeline {
         withSonarQubeEnv('Test_Sonar') {
           sh "${scannerHome}/bin/sonar-scanner"
         }
-        sleep 10
-        timeout(time: 30, unit: 'SECONDS') {
-            waitForQualityGate abortPipeline: true
-        }
       }
     }
     stage('Docker Image') {
